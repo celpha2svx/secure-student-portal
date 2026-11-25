@@ -1,20 +1,27 @@
-# A lightweight Node.js image based on Debian (handles native modules well)
-FROM node:20-slim
+# 1. Use Node 22 (better-sqlite3 requires >= 22)
+FROM node:22-slim
 
-# working directory inside the container
+# 2. Set the working directory inside the container
 WORKDIR /app
 
-# Copy package files first (this caches the npm install step)
+# 3. Install the system dependencies required to compile better-sqlite3
+RUN apt-get update && apt-get install -y \
+    python3 \
+    make \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+# 4. Copy package files first (this caches the npm install step)
 COPY package*.json ./
 
-# Install dependencies
+# 5. Install Node dependencies
 RUN npm install
 
-# Copy the rest of your application files
+# 6. Copy the rest of your application files
 COPY . .
 
-# Expose the port your app runs on
+# 7. Expose the port your app runs on
 EXPOSE 3000
 
-# Start the application
+# 8. Start the application
 CMD ["node", "app.js"]
