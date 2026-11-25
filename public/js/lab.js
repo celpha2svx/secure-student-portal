@@ -1,4 +1,3 @@
-// --- LABORATORY TEST DEFINITIONS ---
 const LAB_TESTS = {
     T01: { name: "Valid Registration", desc: "Register a student and inspect cryptographic artifacts.", stages: ["PBKDF2 Key Derivation", "AES-GCM Encryption", "Digest Generation & Storage"] },
     T02: { name: "Valid Authentication", desc: "Authenticate with correct credentials.", stages: ["Fetch Salt from DB", "Derive Key & Hash", "Verify Hash & Integrity", "Decrypt Record"] },
@@ -13,11 +12,10 @@ const LAB_TESTS = {
 let selectedTest = null;
 let testResults = {};
 
-// --- UI RENDERING ---
 function renderLab() {
     const container = document.getElementById('lab-body');
     const passedCount = Object.values(testResults).filter(r => r === 'pass').length;
-    document.getElementById('lab-prog').innerText = `${passedCount} of 8 passed`;
+    document.getElementById('lab-prog').innerText = `${passedCount} of 8 tests passed`;
 
     container.innerHTML = Object.keys(LAB_TESTS).map(id => {
         const t = LAB_TESTS[id];
@@ -38,19 +36,19 @@ function renderLab() {
                 </div>
                 <div style="display:flex;align-items:center;gap:12px">
                     <span class="${tagClass}">${tagText}</span>
-                    <span style="color:var(--text-3);transform:rotate(${isOpen ? '180deg' : '0deg'});transition:transform .3s">▼</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-3);transform:rotate(${isOpen?'180deg':'0deg'});transition:transform 0.3s"><polyline points="6 9 12 15 18 9"></polyline></svg>
                 </div>
             </div>
             <div class="test-body">
                 <p class="test-desc">${t.desc}</p>
                 <div class="stages" id="stages-${id}">
-                    ${t.stages.map((s, i) => `<div class="stage"><span class="n">0${i+1}</span><span>${s}</span></div>`).join('')}
+                    ${t.stages.map((s, i) => `<div class="stage"><span style="opacity:0.3">○</span><span>${s}</span></div>`).join('')}
                 </div>
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px">
-                    <button class="btn primary" onclick="runLabTest('${id}')" style="width:auto;margin:0">Execute Test</button>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-top:20px;flex-wrap:wrap;gap:12px">
+                    <button class="btn primary" onclick="runLabTest('${id}')" style="width:auto;margin:0;padding:8px 20px;font-size:13px">Execute Test</button>
                     <span class="hint" style="margin:0">${status === 'pass' ? 'Test Passed.' : status === 'fail' ? 'Test Failed.' : 'Ready to run.'}</span>
                 </div>
-                <div class="msg ${status === 'pass' ? 'ok' : status === 'fail' ? 'bad' : ''}" id="msg-${id}" style="display:${status ? 'block' : 'none'}">
+                <div class="msg ${status === 'pass' ? 'ok' : status === 'fail' ? 'bad' : ''}" id="msg-${id}" style="display:${status ? 'block' : 'none'};margin-top:16px;">
                     ${status === 'pass' ? '✓ System successfully defended against the attack.' : status === 'fail' ? '✗ Attack succeeded.' : ''}
                 </div>
             </div>
@@ -63,7 +61,6 @@ function toggleTest(id) {
     renderLab();
 }
 
-// --- TEST EXECUTION LOGIC ---
 async function runLabTest(id) {
     testResults[id] = 'running';
     renderLab();
@@ -71,18 +68,19 @@ async function runLabTest(id) {
     const stageEls = document.querySelectorAll(`#stages-${id} .stage`);
     const msgEl = document.getElementById(`msg-${id}`);
     
-    // Animate stages lighting up
     for (let i = 0; i < stageEls.length; i++) {
         stageEls.forEach(el => el.classList.remove('on'));
         if (stageEls[i]) stageEls[i].classList.add('on');
-        await new Promise(r => setTimeout(r, 600)); // Wait 600ms per stage
-        if (stageEls[i]) { stageEls[i].classList.remove('on'); stageEls[i].classList.add('done'); }
+        await new Promise(r => setTimeout(r, 600));
+        if (stageEls[i]) { 
+            stageEls[i].classList.remove('on'); 
+            stageEls[i].classList.add('done'); 
+            stageEls[i].querySelector('span').innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;color:var(--ok)"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+        }
     }
 
     try {
-        // Execute the actual logic based on the test ID
         if (id === 'T06') {
-            // Call backend to tamper ciphertext
             const res = await fetch('/api/lab/tamper-ciphertext', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: 'student_a' }) });
             const data = await res.json();
             if (data.success) {
@@ -92,7 +90,6 @@ async function runLabTest(id) {
             }
         } 
         else if (id === 'T07') {
-            // Call backend to tamper hash
             const res = await fetch('/api/lab/tamper-hash', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: 'student_a' }) });
             const data = await res.json();
             if (data.success) {
@@ -102,7 +99,6 @@ async function runLabTest(id) {
             }
         }
         else if (id === 'T05') {
-            // Fetch DB and look for plaintext
             const res = await fetch('/api/lab/db');
             const data = await res.json();
             const rawData = JSON.stringify(data);
@@ -112,7 +108,6 @@ async function runLabTest(id) {
             msgEl.innerHTML = hasPlaintext ? '✗ Plaintext found in database!' : '✓ No plaintext found. Only hashes and ciphertext are present.';
         }
         else {
-            // Default pass for demonstration of other tests
             testResults[id] = 'pass';
             msgEl.className = 'msg ok';
             msgEl.innerHTML = '✓ Test executed successfully.';
@@ -125,13 +120,9 @@ async function runLabTest(id) {
 
     msgEl.style.display = 'block';
     renderLab();
-    // Re-attach message visibility after render
     document.getElementById(`msg-${id}`).style.display = 'block';
     document.getElementById(`msg-${id}`).innerHTML = msgEl.innerHTML;
     document.getElementById(`msg-${id}`).className = msgEl.className;
 }
 
-// Initial render
-document.addEventListener('DOMContentLoaded', () => {
-    renderLab();
-});
+document.addEventListener('DOMContentLoaded', () => { renderLab(); });
