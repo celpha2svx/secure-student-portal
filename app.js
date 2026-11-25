@@ -1,9 +1,15 @@
 const express = require('express');
 const session = require('express-session');
 const path = require('path');
+const authRoutes = require('./routes/auth');
+const labRoutes = require('./routes/lab');
+
 
 const app = express();
 const PORT = 3000;
+
+app.use('/api', authRoutes);
+app.use('/api/lab', labRoutes);
 
 // Middleware
 app.use(express.urlencoded({ extended: true }));
